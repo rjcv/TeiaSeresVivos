@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Teia da Vida</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: linear-gradient(150deg, #f0fdf4, #dcfce7, #bbf7d0);
+  min-height: 100vh; padding: 14px;
+}
+.header { text-align: center; margin-bottom: 14px; }
+.header h1 { font-size: 1.75em; color: #14532d; letter-spacing: -0.5px; }
+.header p  { font-size: 0.95em; color: #166534; margin-top: 3px; }
+
+.main { display: flex; gap: 14px; max-width: 1020px; margin: 0 auto; align-items: flex-start; }
+
+.web-wrap {
+  flex: 1; background: white; border-radius: 22px;
+  padding: 14px; box-shadow: 0 4px 28px rgba(0,0,0,0.09);
+}
+.web-inner { display: flex; }
+.level-col { width: 48px; flex-shrink: 0; position: relative; }
+.lbl {
+  position: absolute; left: 0; right: 0; text-align: center;
+  font-size: 0.62em; color: #9ca3af; line-height: 1.3;
+  font-weight: 600; pointer-events: none;
+}
+.web-area { flex: 1; position: relative; height: 460px; }
+#web-svg  { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+/* Cards */
+.card {
+  position: absolute; width: 82px; background: white;
+  border-radius: 16px; border: 3px solid #e5e7eb;
+  padding: 7px 4px 6px; text-align: center; cursor: pointer;
+  transition: transform .2s, box-shadow .2s, border-color .35s, background .35s, opacity .3s;
+  user-select: none; z-index: 10;
+}
+.card:hover { transform: scale(1.1) translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,0.15); }
+.card .ico { font-size: 2.3em; display: block; line-height: 1.1; }
+.card .nm  { font-size: 0.7em; font-weight: 700; color: #374151; margin-top: 3px; }
+.card .lvl-ring { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; }
+
+.card.removed {
+  opacity: 0.18; border-color: #ef4444; background: #fee2e2;
+}
+.card.removed::after {
+  content: '✕'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8em; color: #ef4444; opacity: 0.45;
+  border-radius: 13px; pointer-events: none;
+}
+.card.critical { border-color: #ef4444; background: #fef2f2; animation: pRed 1.4s ease-in-out infinite; }
+.card.atrisk   { border-color: #f97316; background: #fff7ed; animation: pOra 1.4s ease-in-out infinite; }
+.card.overpop  { border-color: #3b82f6; background: #eff6ff; animation: pBlu 1.4s ease-in-out infinite; }
+.card.safe     { border-color: #22c55e; background: #f0fdf4; }
+
+@keyframes pRed { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 50%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
+@keyframes pOra { 0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4)} 50%{box-shadow:0 0 0 10px rgba(249,115,22,0)} }
+@keyframes pBlu { 0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.4)} 50%{box-shadow:0 0 0 10px rgba(59,130,246,0)} }
+
+.dir-hint { font-size: 0.7em; color: #9ca3af; text-align: center; margin-top: 7px; }
+
+/* Side */
+.side { width: 255px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+.box  { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 28px rgba(0,0,0,0.09); }
+.box h3 { color: #14532d; font-size: 1em; margin-bottom: 10px; }
+.default-msg { color: #6b7280; font-size: 0.87em; line-height: 1.6; }
+.intro {
+  font-size: 0.84em; color: #374151; line-height: 1.55;
+  margin-bottom: 10px; padding: 9px 10px;
+  background: #f9fafb; border-radius: 11px; border-left: 3px solid #86efac;
+}
+.iitem {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin-bottom: 8px; padding: 8px 9px; border-radius: 11px;
+  animation: fsl .35s ease both;
+}
+@keyframes fsl { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+.iitem.critical{background:#fef2f2} .iitem.atrisk{background:#fff7ed}
+.iitem.overpop{background:#eff6ff}  .iitem.safe{background:#f0fdf4}
+.iitem .ico2 { font-size:1.5em; flex-shrink:0; margin-top:1px; }
+.iitem strong { display:block; font-size:.83em; color:#111; }
+.iitem span   { font-size:.78em; color:#555; }
+
+.leg-item { display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:.82em; color:#374151; }
+.dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+.lvl-legend { margin-top:12px; padding-top:10px; border-top:1px solid #f3f4f6; }
+.lvl-legend h5 { color:#6b7280; font-size:.78em; margin-bottom:7px; }
+.lvl-item { display:flex; align-items:center; gap:8px; font-size:.78em; color:#555; margin-bottom:5px; }
+
+.btn {
+  width:100%; margin-top:12px; padding:11px; cursor:pointer;
+  background: linear-gradient(135deg,#22c55e,#15803d);
+  color:white; border:none; border-radius:13px;
+  font-size:.94em; font-weight:700; transition:opacity .2s,transform .1s;
+}
+.btn:hover  { opacity:.88; transform:translateY(-1px); }
+.btn:active { transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌿 A Teia da Vida</h1>
+  <p>Clica nos seres vivos para os ativar ou desativar da teia! 🔬</p>
+</div>
+
+<div class="main">
+  <div class="web-wrap">
+    <div class="web-inner">
+      <div class="level-col" id="level-col"></div>
+      <div class="web-area" id="web-area">
+        <svg id="web-svg"></svg>
+      </div>
+    </div>
+    <p class="dir-hint">⬆ As setas mostram "quem come quem" (sentido da energia)</p>
+  </div>
+
+  <div class="side">
+    <div class="box">
+      <h3 id="ptitle">🔍 Descobre o que acontece!</h3>
+      <div id="pcontent">
+        <p class="default-msg">Clica em qualquer ser vivo para descobrires o que acontece quando ele desaparece da floresta! 🌲</p>
+      </div>
+    </div>
+    <div class="box">
+      <h4 style="color:#14532d;font-size:.9em;margin-bottom:10px">📖 Legenda</h4>
+      <div class="leg-item"><div class="dot" style="background:#ef4444"></div> Em perigo 🚨</div>
+      <div class="leg-item"><div class="dot" style="background:#f97316"></div> Em risco ⚠️</div>
+      <div class="leg-item"><div class="dot" style="background:#3b82f6"></div> Superpopulação 📈</div>
+      <div class="leg-item"><div class="dot" style="background:#22c55e"></div> Não afetado ✅</div>
+      <div class="lvl-legend">
+        <h5>NÍVEL TRÓFICO</h5>
+        <div class="lvl-item"><div class="dot" style="background:#dc2626"></div> Topo da cadeia</div>
+        <div class="lvl-item"><div class="dot" style="background:#ea580c"></div> Carnívoros</div>
+        <div class="lvl-item"><div class="dot" style="background:#ca8a04"></div> Herbívoros</div>
+        <div class="lvl-item"><div class="dot" style="background:#16a34a"></div> Produtores</div>
+      </div>
+      <button class="btn" onclick="restore()">🔄 Restaurar Tudo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const animals = {
+  aguia:   {name:'Águia',   art:'a',  emoji:'🦅', level:3, eats:['raposa','cobra','coruja'], eatenBy:[]},
+  raposa:  {name:'Raposa',  art:'a',  emoji:'🦊', level:2, eats:['coelho','rato'],           eatenBy:['aguia']},
+  cobra:   {name:'Cobra',   art:'a',  emoji:'🐍', level:2, eats:['lagarta','rato'],          eatenBy:['aguia']},
+  coruja:  {name:'Coruja',  art:'a',  emoji:'🦉', level:2, eats:['coelho','rato'],           eatenBy:['aguia']},
+  lagarta: {name:'Lagarta', art:'a',  emoji:'🐛', level:1, eats:['plantas'],                 eatenBy:['cobra']},
+  coelho:  {name:'Coelho',  art:'o',  emoji:'🐇', level:1, eats:['plantas'],                 eatenBy:['raposa','coruja']},
+  rato:    {name:'Rato',    art:'o',  emoji:'🐭', level:1, eats:['plantas'],                 eatenBy:['raposa','cobra','coruja']},
+  plantas: {name:'Plantas', art:'as', emoji:'🌿', level:0, eats:[],                          eatenBy:['lagarta','coelho','rato']},
+};
+
+const POS = {
+  aguia:  {l:50,t:3},
+  raposa: {l:14,t:28}, cobra:  {l:50,t:28}, coruja: {l:86,t:28},
+  lagarta:{l:14,t:57}, coelho: {l:50,t:57}, rato:   {l:86,t:57},
+  plantas:{l:50,t:83},
+};
+
+const LEVEL_COLORS = ['#16a34a','#ca8a04','#ea580c','#dc2626'];
+
+const MSGS = {
+  aguia:  'A Águia é o topo da cadeia! Sem ela, as raposas, cobras e corujas multiplicam-se sem controlo, e os animais mais pequenos ficam em perigo!',
+  raposa: 'Sem a Raposa, os coelhos e ratos crescem demais! Isso é mau para as plantas, que são comidas em excesso.',
+  cobra:  'Sem a Cobra, as lagartas e os ratos multiplicam-se. Isso pode prejudicar as plantas e desequilibrar a teia!',
+  coruja: 'Sem a Coruja, os coelhos e ratos multiplicam-se demais! Isso afeta o equilíbrio de toda a floresta.',
+  lagarta:'Sem a Lagarta, a Cobra fica com menos alimento. As plantas também crescem um pouco mais.',
+  coelho: 'Sem o Coelho, a Raposa e a Coruja ficam com menos comida. As plantas crescem mais.',
+  rato:   'Sem o Rato, a Raposa, a Cobra e a Coruja ficam em risco. As plantas também crescem mais.',
+  plantas:'As Plantas são a base de tudo! Sem elas, os herbívoros morrem de fome, e depois os carnívoros também. Toda a teia colapsa!',
+};
+
+// Priority order for state upgrades (higher = worse)
+const stateRank = {removed:-1, safe:0, overpop:1, atrisk:2, critical:3};
+
+let removedSet = new Set();
+let states = {};
+
+// --- Cascade algorithm ---
+// Iterates until stable: critical cascades up (predator starves when prey starves),
+// overpop cascades down (prey pressured when predator multiplies)
+function computeStates() {
+  const res = {};
+  Object.keys(animals).forEach(k => { res[k] = removedSet.has(k) ? 'removed' : 'safe'; });
+
+  for (let pass = 0; pass < 8; pass++) {
+    let changed = false;
+    Object.keys(animals).forEach(k => {
+      if (res[k] === 'removed') return;
+      const a = animals[k];
+
+      // Food sources still available (not removed, not starving)
+      const goodFood   = a.eats.filter(p => res[p] !== 'removed' && res[p] !== 'critical');
+      // Predators that have multiplied out of control
+      const activePreds   = a.eatenBy.filter(p => res[p] !== 'removed' && res[p] !== 'critical');
+      const overpopPreds  = activePreds.filter(p => res[p] === 'overpop');
+      // Predators lost (removed or themselves starving)
+      const predLost = a.eatenBy.filter(p => removedSet.has(p) || res[p] === 'critical').length;
+
+      let proposed = 'safe';
+      if      (a.eats.length > 0 && goodFood.length === 0)             proposed = 'critical';
+      else if (a.eats.length > 0 && goodFood.length < a.eats.length)   proposed = 'atrisk';
+      else if (overpopPreds.length > 0)                                 proposed = 'atrisk';
+      else if (a.eatenBy.length > 0 && predLost > 0)                   proposed = 'overpop';
+
+      if (stateRank[proposed] > stateRank[res[k]]) { res[k] = proposed; changed = true; }
+    });
+    if (!changed) break;
+  }
+  return res;
+}
+
+function getMsg(k) {
+  const s = states[k], a = animals[k];
+  if (s === 'safe')     return 'Não é afetado ✅';
+  if (s === 'overpop')  return 'Com menos predadores, multiplica-se! 📈';
+  if (s === 'critical') return 'Ficou completamente sem alimento!';
+  if (s === 'atrisk') {
+    const goodFood    = a.eats.filter(p => states[p] !== 'removed' && states[p] !== 'critical');
+    const overpopPreds = a.eatenBy.filter(p => states[p] === 'overpop');
+    if (a.eats.length > 0 && goodFood.length < a.eats.length && overpopPreds.length > 0)
+      return 'Perdeu alimento e tem mais predadores ⚠️';
+    if (overpopPreds.length > 0) return 'Os herbívoros crescem e comem mais plantas ⚠️';
+    // distinguish: is it a plant being over-eaten, or a predator losing prey?
+    if (a.eatenBy.length > 0 && a.eats.length === 0) return 'Os herbívoros crescem e comem mais plantas ⚠️';
+    return 'Perdeu fontes de alimento ⚠️';
+  }
+  return '';
+}
+
+// --- Interaction ---
+function toggleAnimal(key) {
+  if (removedSet.has(key)) removedSet.delete(key);
+  else removedSet.add(key);
+  states = computeStates();
+  updateCards();
+  drawConnections();
+  updatePanel();
+}
+
+function updateCards() {
+  Object.keys(animals).forEach(k => {
+    const card = document.getElementById(`c-${k}`);
+    if (!card) return;
+    card.className = 'card ' + (states[k] || 'safe');
+    const a = animals[k];
+    card.title = removedSet.has(k)
+      ? `Clica para ativar ${a.art} ${a.name} novamente`
+      : `Clica para remover ${a.art} ${a.name}`;
+  });
+}
+
+function buildImpactList() {
+  const order = {critical:0, atrisk:1, overpop:2, safe:3};
+  return Object.entries(states)
+    .filter(([,s]) => s !== 'removed')
+    .sort(([,a],[,b]) => order[a] - order[b])
+    .map(([k], i) => {
+      const a = animals[k], s = states[k];
+      return `<div class="iitem ${s}" style="animation-delay:${i*.04}s">
+        <span class="ico2">${a.emoji}</span>
+        <div><strong>${a.name}</strong><span>${getMsg(k)}</span></div>
+      </div>`;
+    }).join('');
+}
+
+function updatePanel() {
+  const n = removedSet.size;
+  const ptitle   = document.getElementById('ptitle');
+  const pcontent = document.getElementById('pcontent');
+
+  if (n === 0) {
+    ptitle.textContent = '🔍 Descobre o que acontece!';
+    pcontent.innerHTML = '<p class="default-msg">Clica em qualquer ser vivo para descobrires o que acontece quando ele desaparece da floresta! 🌲</p>';
+    return;
+  }
+
+  let intro = '';
+  if (n === 1) {
+    const key = [...removedSet][0], a = animals[key];
+    ptitle.innerHTML = `${a.emoji} Sem ${a.art} ${a.name}...`;
+    intro = `<div class="intro">${MSGS[key]}</div>`;
+  } else {
+    const list = [...removedSet].map(k => `${animals[k].emoji} ${animals[k].name}`).join(', ');
+    ptitle.innerHTML = `🔴 ${n} seres removidos`;
+    intro = `<div class="intro">Removeste: <strong>${list}</strong>.<br>Aqui está o impacto combinado na teia!</div>`;
+  }
+  pcontent.innerHTML = intro + buildImpactList();
+}
+
+function restore() {
+  removedSet.clear();
+  states = computeStates();
+  updateCards();
+  drawConnections();
+  updatePanel();
+}
+
+// --- Drawing ---
+function getCenter(key, W, H) {
+  const p = POS[key];
+  return {x: W * p.l / 100, y: H * p.t / 100 + 44};
+}
+
+function mkMarker(parent, id, color) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const m = document.createElementNS(ns,'marker');
+  m.setAttribute('id',id); m.setAttribute('markerWidth','9');
+  m.setAttribute('markerHeight','7'); m.setAttribute('refX','8');
+  m.setAttribute('refY','3.5'); m.setAttribute('orient','auto');
+  const p = document.createElementNS(ns,'path');
+  p.setAttribute('d','M0,0 L0,7 L9,3.5 z'); p.setAttribute('fill',color);
+  m.appendChild(p); parent.appendChild(m);
+}
+
+function drawConnections() {
+  const area = document.getElementById('web-area');
+  const svg  = document.getElementById('web-svg');
+  const W = area.offsetWidth, H = area.offsetHeight;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = document.createElementNS(ns,'defs');
+  svg.appendChild(defs);
+  [{id:'m-def',color:'#d1d5db'},{id:'m-red',color:'#ef4444'},
+   {id:'m-ora',color:'#f97316'},{id:'m-blu',color:'#3b82f6'},
+   {id:'m-grn',color:'#22c55e'}]
+  .forEach(({id,color}) => mkMarker(defs,id,color));
+
+  Object.entries(animals).forEach(([predKey, predData]) => {
+    predData.eats.forEach(preyKey => {
+      if (removedSet.has(preyKey) || removedSet.has(predKey)) return;
+      const c1 = getCenter(preyKey,W,H), c2 = getCenter(predKey,W,H);
+      const dx=c2.x-c1.x, dy=c2.y-c1.y, dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist < 2) return;
+      const ux=dx/dist, uy=dy/dist, off=46;
+
+      let color='#d1d5db', mid='m-def', sw='2';
+      if (removedSet.size > 0) {
+        const s1=states[preyKey]||'safe', s2=states[predKey]||'safe';
+        const worst = stateRank[s1] >= stateRank[s2] ? s1 : s2;
+        if (worst==='critical'){color='#ef4444';mid='m-red';sw='3';}
+        else if (worst==='atrisk'){color='#f97316';mid='m-ora';sw='2.5';}
+        else if (worst==='overpop'){color='#3b82f6';mid='m-blu';sw='2.5';}
+        else{color='#22c55e';mid='m-grn';}
+      }
+
+      const line = document.createElementNS(ns,'line');
+      line.setAttribute('x1',c1.x+ux*off);     line.setAttribute('y1',c1.y+uy*off);
+      line.setAttribute('x2',c2.x-ux*(off+5)); line.setAttribute('y2',c2.y-uy*(off+5));
+      line.setAttribute('stroke',color); line.setAttribute('stroke-width',sw);
+      line.setAttribute('stroke-opacity','0.75');
+      line.setAttribute('marker-end',`url(#${mid})`);
+      svg.appendChild(line);
+    });
+  });
+}
+
+function buildCards() {
+  const area = document.getElementById('web-area');
+  area.querySelectorAll('.card').forEach(c => c.remove());
+  Object.entries(animals).forEach(([key, data]) => {
+    const p = POS[key];
+    const card = document.createElement('div');
+    card.className = 'card'; card.id = `c-${key}`;
+    card.innerHTML = `<span class="ico">${data.emoji}</span><div class="nm">${data.name}</div><div class="lvl-ring" style="background:${LEVEL_COLORS[data.level]}"></div>`;
+    card.style.left = `calc(${p.l}% - 41px)`;
+    card.style.top  = `${p.t}%`;
+    card.title = `Clica para remover ${data.art} ${data.name}`;
+    card.addEventListener('click', () => toggleAnimal(key));
+    area.appendChild(card);
+  });
+}
+
+function buildLevelLabels() {
+  const col = document.getElementById('level-col');
+  col.innerHTML = '';
+  const H = document.getElementById('web-area').offsetHeight || 460;
+  col.style.height = H + 'px'; col.style.position = 'relative';
+  [{key:'aguia',  label:'🦅<br>Topo'},
+   {key:'raposa', label:'🐾<br>Carnívoros'},
+   {key:'lagarta',label:'🌾<br>Herbívoros'},
+   {key:'plantas',label:'🌱<br>Produtores'}]
+  .forEach(({key,label}) => {
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl'; lbl.innerHTML = label;
+    lbl.style.top = `${POS[key].t + 1}%`;
+    col.appendChild(lbl);
+  });
+}
+
+window.addEventListener('load', () => {
+  states = computeStates();
+  buildCards();
+  buildLevelLabels();
+  drawConnections();
+  window.addEventListener('resize', () => { buildLevelLabels(); drawConnections(); });
+});
+</script>
+</body>
+</html>
